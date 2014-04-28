@@ -1,0 +1,14 @@
+{
+    "name": "cept/phapp",
+    "description": "Phalcon application library",
+    "authors": [
+        {
+            "name": "chris",
+            "email": "chris.de.kok@gmail.com"
+        }
+    ],
+    "minimum-stability": "dev",
+    "require": {
+
+    }
+}
