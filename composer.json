@@ -10,7 +10,8 @@
     "minimum-stability": "dev",
     "require": {
         "php": ">=5.4.0",
-        "ext-phalcon": "1.*"
+        "ext-phalcon": "1.*",
+        "doctrine/dbal": "2.*"
     },
     "require-dev": {
         "phpunit/phpunit": "3.*"

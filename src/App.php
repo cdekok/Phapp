@@ -48,7 +48,7 @@ class App {
         foreach ($this->config['modules'] as $config) {
             $module = new \ReflectionClass($config['className']);
             $moduleConfig = require dirname($module->getFileName()).'/../config/config.php';
-            $this->config += $moduleConfig;
+            $this->config = array_merge($this->config, $moduleConfig);
         }
     }
     
@@ -72,10 +72,23 @@ class App {
             }            
         }
         // module routes
-        foreach ($this->config['routes'] as $route => $config) {            
+        foreach ($this->config['routes'] as $route => $config) {
             $router->add($route, $config);
         }       
         $this->getDi()['router'] = $router;
+    }
+    
+    /**
+     * Setup db 
+     */
+    private function setUpDb()
+    {
+        if (!isset($this->config['db'])) {
+            return;
+        }        
+        $config = new \Doctrine\DBAL\Configuration();
+        $db = \Doctrine\DBAL\DriverManager::getConnection($this->config['db'], $config);
+        $this->getDi()['db'] = $db;
     }
     
     /**
