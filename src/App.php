@@ -30,28 +30,52 @@ class App {
     public function run()
     {
         try {
-            $this->bootstrap();
+            $this->setupConfig();
+            $this->setupRoutes();
+            $app = new \Phalcon\Mvc\Application($this->getDi());
+            $app->registerModules($this->config['modules']);        
+            echo $app->handle()->getContent();
         } catch (\Exception $exc) {
             echo $exc->getMessage();
+        }
+    }    
+
+    /**
+     * Retrieve all config from modules
+     */
+    private function setupConfig()
+    {
+        foreach ($this->config['modules'] as $config) {
+            $module = new \ReflectionClass($config['className']);
+            $moduleConfig = require dirname($module->getFileName()).'/../config/config.php';
+            $this->config += $moduleConfig;
         }
     }
     
     /**
-     * Bootstrap application
+     * Setup routing
      */
-    private function bootstrap()
-    {
-        $app = new \Phalcon\Mvc\Application();
-        $app->registerModules($this->config['modules']);
-    }
-
-    private function setupRoutes()
-    {
+    private function setUpRoutes()
+    {        
         $router = new \Phalcon\Mvc\Router();
-        $router->setDefaultModule('\\Cept\\Blog');
-        foreach ($this->config['routes'] as $route => $config) {
-            $router->add($route, $config);
+        $router->setUriSource(\Phalcon\Mvc\Router::URI_SOURCE_SERVER_REQUEST_URI);
+        // default routes
+        if (isset($this->config['defaultRoute'])) {
+            if (isset($this->config['defaultRoute']['module'])) {
+                $router->setDefaultModule($this->config['defaultRoute']['module']);
+            }
+            if (isset($this->config['defaultRoute']['controller'])) {
+                $router->setDefaultController($this->config['defaultRoute']['controller']);
+            }
+            if (isset($this->config['defaultRoute']['action'])) {
+                $router->setDefaultAction($this->config['defaultRoute']['action']);
+            }            
         }
+        // module routes
+        foreach ($this->config['routes'] as $route => $config) {            
+            $router->add($route, $config);
+        }       
+        $this->getDi()['router'] = $router;
     }
     
     /**
