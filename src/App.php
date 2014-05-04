@@ -35,8 +35,13 @@ class App {
             $app = new \Phalcon\Mvc\Application($this->getDi());
             $app->registerModules($this->config['modules']);        
             echo $app->handle()->getContent();
-        } catch (\Exception $exc) {
-            echo $exc->getMessage();
+        } catch ( \Exception $exc) {
+            echo $exc->getMessage();            
+            if ($this->config['debug'] === true) {
+                echo '<pre>';
+                echo $exc->getTraceAsString();
+                echo '</pre>';
+            }
         }
     }    
 
@@ -72,9 +77,9 @@ class App {
             }            
         }
         // module routes
-        foreach ($this->config['routes'] as $route => $config) {
-            $router->add($route, $config);
-        }       
+        foreach ($this->config['routes'] as $name => $route) {
+            $router->add($route['route'], $route['params'])->setName($name);
+        }
         $this->getDi()['router'] = $router;
     }
     
