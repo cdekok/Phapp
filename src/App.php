@@ -32,8 +32,9 @@ class App {
         try {
             $this->setupConfig();
             $this->setupRoutes();
-            $app = new \Phalcon\Mvc\Application($this->getDi());
-            $app->registerModules($this->config['modules']);        
+            $this->setupView();
+            $app = new \Phalcon\Mvc\Application($this->getDi());             
+            $app->registerModules($this->config['modules']);                
             echo $app->handle()->getContent();
         } catch ( \Exception $exc) {
             echo $exc->getMessage();            
@@ -45,6 +46,31 @@ class App {
         }
     }    
 
+    private function setupView()
+    {
+        $view = new \Phalcon\Mvc\View();
+        $config = $this->config;
+        $this->getDi()->setShared('\Phapp\Mvc\View\Engine\Php', function($view, $di) use ($config) {
+            $ngn = new \Phapp\Mvc\View\Engine\Php($view, $di);
+            if (isset($config['views']['theme'])) {
+                $ngn->setThemePath($config['views']['theme']);
+            }
+            return $ngn;
+        });
+        $view->registerEngines(['.phtml' => '\Phapp\Mvc\View\Engine\Php']);
+        
+        if (isset($this->config['views']['viewsDir'])) {
+            $view->setViewsDir($this->config['views']['viewsDir']);
+        }
+        if (isset($this->config['views']['layoutDir'])) {            
+            $view->setLayoutsDir($this->config['views']['layoutDir']);
+        }
+        if (isset($this->config['views']['layoutDir'])) {
+            $view->setLayout($this->config['views']['layout']);
+        }
+        $this->getDi()['view'] = $view;
+    }
+
     /**
      * Retrieve all config from modules
      */
@@ -53,7 +79,7 @@ class App {
         foreach ($this->config['modules'] as $config) {
             $module = new \ReflectionClass($config['className']);
             $moduleConfig = require dirname($module->getFileName()).'/../config/config.php';
-            $this->config = array_merge($this->config, $moduleConfig);
+            $this->config = array_merge_recursive($this->config, $moduleConfig);
         }
     }
     
@@ -62,19 +88,21 @@ class App {
      */
     private function setUpRoutes()
     {        
-        $router = new \Phalcon\Mvc\Router();
+        $router = new \Phalcon\Mvc\Router(false);
+        
         $router->setUriSource(\Phalcon\Mvc\Router::URI_SOURCE_SERVER_REQUEST_URI);
         // default routes
         if (isset($this->config['defaultRoute'])) {
-            if (isset($this->config['defaultRoute']['module'])) {
-                $router->setDefaultModule($this->config['defaultRoute']['module']);
-            }
-            if (isset($this->config['defaultRoute']['controller'])) {
-                $router->setDefaultController($this->config['defaultRoute']['controller']);
-            }
-            if (isset($this->config['defaultRoute']['action'])) {
-                $router->setDefaultAction($this->config['defaultRoute']['action']);
-            }            
+            foreach ($this->config['defaultRoute'] as $key => $val) {
+                $method = 'set'.$key;
+                if (method_exists($router, $method)) {
+                    $router->$method($val);                
+                }
+            }         
+        }
+        // Setup 404
+        if (isset($this->config['notFoundRoute'])) {            
+            $router->notFound($this->config['notFoundRoute']);
         }
         // module routes
         foreach ($this->config['routes'] as $name => $route) {
