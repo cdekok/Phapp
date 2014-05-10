@@ -45,11 +45,14 @@ class App {
             }
         }
     }    
-
+    
+    /**
+     * Configure view in DI
+     */
     private function setupView()
     {
-        $view = new \Phalcon\Mvc\View();
         $config = $this->config;
+        $view = new \Phapp\Mvc\View();
         $this->getDi()->setShared('\Phapp\Mvc\View\Engine\Php', function($view, $di) use ($config) {
             $ngn = new \Phapp\Mvc\View\Engine\Php($view, $di);
             if (isset($config['views']['theme'])) {

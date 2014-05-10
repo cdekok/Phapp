@@ -1,7 +1,7 @@
 <?php
 namespace Phapp\Mvc\View\Engine;
 
-class Php extends \Phalcon\Mvc\View\Engine\Php
+class Php extends \Phalcon\Mvc\View\Engine\Php implements \Phapp\Mvc\View\Engine\ThemeInterface
 {
     /**
      * Theme path
@@ -18,15 +18,17 @@ class Php extends \Phalcon\Mvc\View\Engine\Php
     */
     public function render($path, $params, $must_clean = null)
     {
+        // Check for view override
         $themePath = str_replace(
             $this->di->getView()->getViewsDir(),
             $this->getThemePath().$this->getDI()->get('dispatcher')->getModuleName().DIRECTORY_SEPARATOR,
             $path
-        );
+        );        
         if (is_readable($themePath)) {
             $path = $themePath;
         }
-
+        
+        // Check for layout override                
         return parent::render($path, $params, $must_clean);
     }
     
