@@ -52,15 +52,10 @@ class App {
     private function setupView()
     {
         $config = $this->config;
-        $view = new \Phapp\Mvc\View();
-        $this->getDi()->setShared('\Phapp\Mvc\View\Engine\Php', function($view, $di) use ($config) {
-            $ngn = new \Phapp\Mvc\View\Engine\Php($view, $di);
-            if (isset($config['views']['theme'])) {
-                $ngn->setThemePath($config['views']['theme']);
-            }
-            return $ngn;
-        });
-        $view->registerEngines(['.phtml' => '\Phapp\Mvc\View\Engine\Php']);
+        $view = new \Phapp\Mvc\View();    
+        if (isset($config['views']['theme'])) {
+            $view->setThemePath($config['views']['theme']);
+        }
         
         if (isset($this->config['views']['viewsDir'])) {
             $view->setViewsDir($this->config['views']['viewsDir']);

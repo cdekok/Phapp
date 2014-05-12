@@ -1,5 +1,5 @@
 <?php
-namespace Phapp\Mvc\View\Engine;
+namespace Phapp\Mvc;
 
 interface ThemeInterface {
     
