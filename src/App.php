@@ -29,6 +29,18 @@ class App {
      */
     public function run()
     {
+        if (php_sapi_name() === 'cli') {
+            $this->cliRequest();
+        } else {
+            $this->webRequest();
+        }
+    }    
+    
+    /**
+     * Handle web request
+     */
+    protected function webRequest() 
+    {
         try {
             $this->setupConfig();
             $this->setupRoutes();
@@ -44,8 +56,24 @@ class App {
                 echo '</pre>';
             }
         }
-    }    
-    
+    }
+
+    /**
+     * Handle command line request
+     */
+    protected function cliRequest()
+    {
+        $this->setupConfig();
+        if (!isset($this->config['commands']) OR empty($this->config['commands'])) {
+            return;
+        }
+        $app = new \Symfony\Component\Console\Application('phapp');
+        foreach ($this->config['commands'] as $cmd) {
+            $app->add(new $cmd);
+        }   
+        $app->run();
+    }
+
     /**
      * Configure view in DI
      */
