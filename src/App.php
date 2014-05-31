@@ -69,7 +69,11 @@ class App {
         }
         $app = new \Symfony\Component\Console\Application('phapp');
         foreach ($this->config['commands'] as $cmd) {
-            $app->add(new $cmd);
+            $cliCmd = new $cmd;
+            if ($cliCmd instanceof \Phalcon\DI\InjectionAwareInterface) {
+                $cliCmd->setDI($this->getDi());
+            }
+            $app->add($cliCmd);
         }   
         $app->run();
     }
@@ -83,8 +87,7 @@ class App {
         $view = new \Phapp\Mvc\View();    
         if (isset($config['views']['theme'])) {
             $view->setThemePath($config['views']['theme']);
-        }
-        
+        }        
         if (isset($this->config['views']['viewsDir'])) {
             $view->setViewsDir($this->config['views']['viewsDir']);
         }
@@ -107,6 +110,7 @@ class App {
             $moduleConfig = require dirname($module->getFileName()).'/../config/config.php';
             $this->config = array_merge_recursive($this->config, $moduleConfig);
         }
+        $this->setUpDb();
     }
     
     /**
@@ -144,10 +148,10 @@ class App {
     {
         if (!isset($this->config['db'])) {
             return;
-        }        
+        }            
         $config = new \Doctrine\DBAL\Configuration();
         $db = \Doctrine\DBAL\DriverManager::getConnection($this->config['db'], $config);
-        $this->getDi()['db'] = $db;
+        $this->getDi()->set('db', $db);
     }
     
     /**
@@ -159,6 +163,13 @@ class App {
         if ($this->di) {
             return $this->di;
         }
-        return $this->di = new \Phalcon\DI\FactoryDefault();
+        $this->di = new DI\FactoryDefault();
+        // Add factories to the DI
+        if (isset($this->config['factories'])) {
+            foreach ($this->config['factories'] as $name => $definition) {
+                $this->di->set($name, $definition, true);
+            }
+        }        
+        return $this->di;
     }
 }
