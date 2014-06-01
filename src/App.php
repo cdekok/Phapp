@@ -169,7 +169,17 @@ class App {
             foreach ($this->config['factories'] as $name => $definition) {
                 $this->di->set($name, $definition, true);
             }
-        }        
+        }                
+        // Config for session data
+        $this->di->set('session', function(){
+            $sessionSettings = [];
+            if (isset($this->config['session'])) {
+                $sessionSettings = $this->config['session'];
+            }
+            $session = new \Phalcon\Session\Adapter\Files($sessionSettings);
+            $session->start();
+            return $session;
+        }, true);
         return $this->di;
     }
 }
