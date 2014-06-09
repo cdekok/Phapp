@@ -59,7 +59,7 @@ class ResultSet implements \Iterator {
      * @param \Doctrine\DBAL\Driver\Statement $stmt
      * @param \Cept\User\Model\Cept\User\Hydrate\HydrateInterface $hydrate
      */
-    public function __construct(\Doctrine\DBAL\Query\QueryBuilder $qb, \Cept\User\Hydrate\HydrateInterface $hydrate = null) {
+    public function __construct(\Doctrine\DBAL\Query\QueryBuilder $qb, \Phapp\Hydrate\HydrateInterface $hydrate = null) {
         $this->qb = $qb;
         $this->hydrator = $hydrate;
     }
