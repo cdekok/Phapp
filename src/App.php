@@ -118,27 +118,32 @@ class App {
      */
     private function setUpRoutes()
     {        
-        $router = new \Phalcon\Mvc\Router(false);
+        $group = new \Phalcon\Mvc\Router\Group();
+        //$group->setPrefix('/{lang}');
         
-        $router->setUriSource(\Phalcon\Mvc\Router::URI_SOURCE_SERVER_REQUEST_URI);
         // default routes
         if (isset($this->config['defaultRoute'])) {
             foreach ($this->config['defaultRoute'] as $key => $val) {
                 $method = 'set'.$key;
-                if (method_exists($router, $method)) {
-                    $router->$method($val);                
+                if (method_exists($group, $method)) {
+                    $group->$method($val);                
                 }
             }         
         }
+        
+        // module routes
+        foreach ($this->config['routes'] as $name => $route) {
+            $group->add($route['route'], $route['params'])->setName($name);
+        }   
+                
+        $router = new \Phalcon\Mvc\Router(false);        
+        $router->setUriSource(\Phalcon\Mvc\Router::URI_SOURCE_SERVER_REQUEST_URI);
         // Setup 404
         if (isset($this->config['notFoundRoute'])) {            
             $router->notFound($this->config['notFoundRoute']);
-        }
-        // module routes
-        foreach ($this->config['routes'] as $name => $route) {
-            $router->add($route['route'], $route['params'])->setName($name);
-        }
-        $this->getDi()['router'] = $router;
+        }        
+        $router->mount($group);        
+        $this->getDi()['router'] = $router;        
     }
     
     /**
@@ -180,6 +185,12 @@ class App {
             $session->start();
             return $session;
         }, true);
+        // Set base url for url helper       
+        $this->di->set('url', function(){
+            $url = new \Phalcon\Mvc\Url();
+            $url->setBaseUri($this->config['baseUrl']);
+            return $url;
+        });
         return $this->di;
     }
 }
