@@ -11,6 +11,12 @@ class ResultSet implements \Iterator {
     protected $stmt;
 
     /**
+     * Query builder
+     * @var \Doctrine\DBAL\Query\QueryBuilder
+     */
+    protected $qb;
+    
+    /**
      * Rewind counter
      * @var integer
      */
@@ -53,8 +59,8 @@ class ResultSet implements \Iterator {
      * @param \Doctrine\DBAL\Driver\Statement $stmt
      * @param \Cept\User\Model\Cept\User\Hydrate\HydrateInterface $hydrate
      */
-    public function __construct(\Doctrine\DBAL\Driver\Statement $stmt, \Cept\User\Hydrate\HydrateInterface $hydrate = null) {
-        $this->stmt = $stmt;
+    public function __construct(\Doctrine\DBAL\Query\QueryBuilder $qb, \Cept\User\Hydrate\HydrateInterface $hydrate = null) {
+        $this->qb = $qb;
         $this->hydrator = $hydrate;
     }
     /**
@@ -124,10 +130,11 @@ class ResultSet implements \Iterator {
         $this->run++;
         $this->key = 0;
         if ($this->run === 1) {
+            $this->stmt = $this->qb->execute();
             $this->next();                    
         }
         if ($this->run > 1 && !$this->cacheResult) {
-            throw new Exception\RewindException('You can only iterate once');
+            throw new Exception\RewindException('You can only iterate once, or enable the cache');
         }
         if ($this->run > 1 && $this->cacheResult) {
             reset($this->cache);
