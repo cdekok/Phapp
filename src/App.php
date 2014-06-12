@@ -2,28 +2,28 @@
 namespace Phapp;
 
 class App {
-    
+
     /**
      * Phalcon DI
      * @var \Phalcon\DiInterface
      */
     private $di;
-    
+
     /**
      * Appliction config
      * @var array
      */
     private $config;
-    
+
     /**
      * Construct application
      * @param array $config
      */
-    public function __construct(array $config) 
+    public function __construct(array $config)
     {
         $this->config = $config;
     }
-    
+
     /**
      * Run application
      */
@@ -34,22 +34,22 @@ class App {
         } else {
             $this->webRequest();
         }
-    }    
-    
+    }
+
     /**
      * Handle web request
      */
-    protected function webRequest() 
+    protected function webRequest()
     {
         try {
             $this->setupConfig();
             $this->setupRoutes();
             $this->setupView();
-            $app = new \Phalcon\Mvc\Application($this->getDi());             
-            $app->registerModules($this->config['modules']);                
+            $app = new \Phalcon\Mvc\Application($this->getDi());
+            $app->registerModules($this->config['modules']);
             echo $app->handle()->getContent();
         } catch ( \Exception $exc) {
-            echo $exc->getMessage();            
+            echo $exc->getMessage();
             if ($this->config['debug'] === true) {
                 echo '<pre>';
                 echo $exc->getTraceAsString();
@@ -74,7 +74,7 @@ class App {
                 $cliCmd->setDI($this->getDi());
             }
             $app->add($cliCmd);
-        }   
+        }
         $app->run();
     }
 
@@ -84,14 +84,14 @@ class App {
     private function setupView()
     {
         $config = $this->config;
-        $view = new \Phapp\Mvc\View();    
+        $view = new \Phapp\Mvc\View();
         if (isset($config['views']['theme'])) {
             $view->setThemePath($config['views']['theme']);
-        }        
+        }
         if (isset($this->config['views']['viewsDir'])) {
             $view->setViewsDir($this->config['views']['viewsDir']);
         }
-        if (isset($this->config['views']['layoutDir'])) {            
+        if (isset($this->config['views']['layoutDir'])) {
             $view->setLayoutsDir($this->config['views']['layoutDir']);
         }
         if (isset($this->config['views']['layoutDir'])) {
@@ -112,53 +112,53 @@ class App {
         }
         $this->setUpDb();
     }
-    
+
     /**
      * Setup routing
      */
     private function setUpRoutes()
-    {        
+    {
         $group = new \Phalcon\Mvc\Router\Group();
         //$group->setPrefix('/{lang}');
-        
+
         // default routes
         if (isset($this->config['defaultRoute'])) {
             foreach ($this->config['defaultRoute'] as $key => $val) {
                 $method = 'set'.$key;
                 if (method_exists($group, $method)) {
-                    $group->$method($val);                
+                    $group->$method($val);
                 }
-            }         
+            }
         }
-        
+
         // module routes
         foreach ($this->config['routes'] as $name => $route) {
             $group->add($route['route'], $route['params'])->setName($name);
-        }   
-                
-        $router = new \Phalcon\Mvc\Router(false);        
+        }
+
+        $router = new \Phalcon\Mvc\Router(false);
         $router->setUriSource(\Phalcon\Mvc\Router::URI_SOURCE_SERVER_REQUEST_URI);
         // Setup 404
-        if (isset($this->config['notFoundRoute'])) {            
+        if (isset($this->config['notFoundRoute'])) {
             $router->notFound($this->config['notFoundRoute']);
-        }        
-        $router->mount($group);        
-        $this->getDi()['router'] = $router;        
+        }
+        $router->mount($group);
+        $this->getDi()['router'] = $router;
     }
-    
+
     /**
-     * Setup db 
+     * Setup db
      */
     private function setUpDb()
     {
         if (!isset($this->config['db'])) {
             return;
-        }            
+        }
         $config = new \Doctrine\DBAL\Configuration();
         $db = \Doctrine\DBAL\DriverManager::getConnection($this->config['db'], $config);
         $this->getDi()->set('db', $db);
     }
-    
+
     /**
      * Get DI
      * @return \Phalcon\DiInterface
@@ -169,13 +169,19 @@ class App {
             return $this->di;
         }
         $this->di = new DI\FactoryDefault();
+
+        // Add config to the DI
+        $this->di->set('config', new \Phalcon\Config($this->config), true);
+
         // Add factories to the DI
         if (isset($this->config['factories'])) {
             foreach ($this->config['factories'] as $name => $definition) {
                 $this->di->set($name, $definition, true);
             }
-        }                
+        }
+        $this->getDi()->get('cache');
         // Config for session data
+        // Cannot be set with factory :(
         $this->di->set('session', function(){
             $sessionSettings = [];
             if (isset($this->config['session'])) {
@@ -185,7 +191,7 @@ class App {
             $session->start();
             return $session;
         }, true);
-        // Set base url for url helper       
+        // Set base url for url helper
         $this->di->set('url', function(){
             $url = new \Phalcon\Mvc\Url();
             $url->setBaseUri($this->config['baseUrl']);
